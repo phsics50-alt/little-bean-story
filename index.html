@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>강낭콩의 작은 여행 - 식물의 일대기 체험</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #F0F4EC;
+      --text-color: #2C4A1E;
+      --accent-beige: #E8C4A0;
+      --accent-mint: #C9E0C0;
+      --soft-green: #88B04B;
+      --deep-green: #3B5E28;
+      --gold-sun: #F5B041;
+      --soil-color: #8D6E63;
+      --soil-dark: #5D4037;
+      --paper-texture: rgba(255, 255, 255, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Nanum Myeongjo', serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 24px;
+    }
+
+    /* 거친 종이 질감 오버레이 (SVG feTurbulence 기반) */
+    .paper-texture-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0.28;
+      filter: url(#paper-grain);
+      z-index: 99;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.7) 0%, rgba(220,230,215,0.3) 100%);
+    }
+
+    /* 상단 헤더 및 상태 메시지 */
+    header {
+      width: 100%;
+      max-width: 900px;
+      text-align: center;
+      z-index: 10;
+      margin-top: 6px;
+    }
+
+    h1 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text-color);
+      margin-bottom: 6px;
+      text-shadow: 1px 2px 4px rgba(44, 74, 30, 0.1);
+    }
+
+    .sub-title {
+      font-size: 0.95rem;
+      color: #557245;
+      margin-bottom: 12px;
+    }
+
+    /* 단계 표시기 */
+    .stepper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .step-pill {
+      font-size: 0.85rem;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(201, 224, 192, 0.45);
+      border: 1px solid rgba(44, 74, 30, 0.2);
+      color: var(--text-color);
+      transition: all 0.4s ease;
+      position: relative;
+    }
+
+    .step-pill.active {
+      background: var(--text-color);
+      color: #F8FAF6;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(44, 74, 30, 0.2);
+      transform: scale(1.05);
+    }
+
+    .step-pill.completed {
+      background: var(--accent-mint);
+      border-color: #88B04B;
+      color: #1e3814;
+    }
+
+    .step-pill.completed::after {
+      content: " ✓";
+      font-size: 0.8rem;
+    }
+
+    /* 안내 메시지 카드 */
+    .message-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(201, 224, 192, 0.8);
+      border-radius: 16px;
+      padding: 12px 24px;
+      display: inline-block;
+      max-width: 90%;
+      min-height: 52px;
+      box-shadow: 0 6px 18px rgba(44, 74, 30, 0.08);
+      transition: all 0.4s ease;
+    }
+
+    .message-text {
+      font-size: 1.18rem;
+      line-height: 1.5;
+      font-style: normal;
+    }
+
+    .message-text em {
+      font-style: italic;
+      color: #1f3813;
+      font-weight: 700;
+      background: linear-gradient(180deg, transparent 60%, rgba(201, 224, 192, 0.8) 60%);
+      padding: 0 3px;
+    }
+
+    /* 메인 캔버스 영역 */
+    .garden-stage {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      height: 480px;
+      background: radial-gradient(circle at 50% 25%, #FAFCF8 0%, #E6EFE1 80%);
+      border-radius: 28px;
+      box-shadow: inset 0 2px 8px rgba(255,255,255,0.8), 0 12px 32px rgba(44, 74, 30, 0.09);
+      border: 1.5px solid rgba(201, 224, 192, 0.9);
+      overflow: hidden;
+      margin: 12px 0;
+    }
+
+    /* 수채화 배경 번짐 효과 */
+    .watercolor-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: url(#watercolor-filter) blur(20px);
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .blob-1 {
+      width: 280px;
+      height: 280px;
+      background: #C9E0C0;
+      top: 10%;
+      left: 15%;
+    }
+
+    .blob-2 {
+      width: 320px;
+      height: 320px;
+      background: #E8C4A0;
+      top: 30%;
+      right: 10%;
+      opacity: 0.25;
+    }
+
+    /* 화분 및 흙 (Soil Bed) */
+    .soil-bed {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 340px;
+      height: 115px;
+      z-index: 5;
+    }
+
+    .pot-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .pot-body {
+      fill: #C47A53;
+      filter: drop-shadow(0 6px 12px rgba(70, 35, 15, 0.25));
+    }
+
+    .pot-rim {
+      fill: #D88962;
+    }
+
+    .soil-mound {
+      fill: url(#soil-grad);
+      filter: url(#watercolor-filter);
+      cursor: default;
+      transition: all 0.3s ease;
+    }
+
+    .soil-bed.drop-ready .soil-mound {
+      filter: url(#watercolor-filter) drop-shadow(0 0 12px #88B04B);
+      animation: pulse-soil 1.2s infinite alternate ease-in-out;
+    }
+
+    @keyframes pulse-soil {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.02); }
+    }
+
+    /* 1단계: 씨앗 트레이 & 씨앗 */
+    .seed-bench {
+      position: absolute;
+      left: 36px;
+      top: 170px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .seed-box {
+      width: 90px;
+      height: 90px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 2px dashed rgba(44, 74, 30, 0.4);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(44, 74, 30, 0.08);
+      position: relative;
+    }
+
+    .seed-box-label {
+      font-size: 0.82rem;
+      color: var(--text-color);
+      font-weight: 700;
+      background: rgba(232, 196, 160, 0.5);
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+
+    .draggable-seed {
+      width: 58px;
+      height: 40px;
+      cursor: grab;
+      transition: transform 0.2s, filter 0.2s;
+      filter: drop-shadow(0 4px 8px rgba(60, 30, 10, 0.25));
+      touch-action: none;
+      z-index: 25;
+    }
+
+    .draggable-seed:hover {
+      transform: scale(1.1) rotate(-4deg);
+    }
+
+    .draggable-seed:active {
+      cursor: grabbing;
+      transform: scale(1.15) rotate(-6deg);
+    }
+
+    .seed-hint-arrow {
+      position: absolute;
+      top: -24px;
+      font-size: 0.78rem;
+      background: #2C4A1E;
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 8px;
+      white-space: nowrap;
+      animation: bounce-seed 1.5s infinite;
+    }
+
+    @keyframes bounce-seed {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    /* 심어진 씨앗 애니메이션 */
+    .planted-seed {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translate(-50%, 0) scale(0.9);
+      z-index: 4;
+      transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .planted-seed.bury {
+      opacity: 1;
+      transform: translate(-50%, 25px) scale(0.7);
+      filter: blur(1px) brightness(0.7);
+    }
+
+    /* 3단계: 해님 (Sun) */
+    .golden-sun-wrapper {
+      position: absolute;
+      top: 25px;
+      right: 50px;
+      z-index: 30;
+      cursor: grab;
+      touch-action: none;
+      transition: opacity 0.5s ease;
+      opacity: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .golden-sun-wrapper.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .golden-sun-wrapper:active {
+      cursor: grabbing;
+    }
+
+    .sun-halo {
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      background: radial-gradient(circle, rgba(245, 176, 65, 0.45) 0%, rgba(245, 176, 65, 0) 70%);
+      border-radius: 50%;
+      animation: sun-pulse 2.5s infinite alternate ease-in-out;
+      pointer-events: none;
+    }
+
+    @keyframes sun-pulse {
+      0% { transform: scale(0.9); opacity: 0.5; }
+      100% { transform: scale(1.25); opacity: 0.85; }
+    }
+
+    .sun-hint {
+      margin-top: 6px;
+      font-size: 0.78rem;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(245, 176, 65, 0.6);
+      padding: 2px 10px;
+      border-radius: 10px;
+      color: #935100;
+      font-weight: 700;
+      pointer-events: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    /* 식물 SVG 렌더러 */
+    .plant-svg-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    /* 인터랙션 버튼 영역 (물주기, 리셋 등) */
+    .stage-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-top: 6px;
+      z-index: 20;
+      min-height: 56px;
+    }
+
+    .action-btn {
+      appearance: none;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 12px 28px;
+      border-radius: 25px;
+      background: linear-gradient(135deg, #A4C639 0%, #769E26 100%);
+      color: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 6px 16px rgba(44, 74, 30, 0.25), inset 0 1px 1px rgba(255,255,255,0.4);
+      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(44, 74, 30, 0.32);
+      background: linear-gradient(135deg, #B2D246 0%, #688E20 100%);
+    }
+
+    .action-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 3px 8px rgba(44, 74, 30, 0.25);
+    }
+
+    .action-btn.water-btn {
+      background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+      box-shadow: 0 6px 16px rgba(9, 132, 227, 0.25);
+    }
+    .action-btn.water-btn:hover {
+      background: linear-gradient(135deg, #89c4ff 0%, #0875c7 100%);
+    }
+
+    .water-count-badge {
+      background: rgba(255, 255, 255, 0.3);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.88rem;
+    }
+
+    .restart-btn {
+      font-size: 0.9rem;
+      padding: 8px 18px;
+      background: rgba(255,255,255,0.7);
+      color: #557245;
+      border: 1px solid rgba(44,74,30,0.25);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .restart-btn:hover {
+      background: #ffffff;
+      color: var(--text-color);
+    }
+
+    /* 떨어지는 수채화 물방울 애니메이션 */
+    .water-drop {
+      position: absolute;
+      width: 22px;
+      height: 28px;
+      pointer-events: none;
+      z-index: 15;
+      animation: waterFall 0.85s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      filter: url(#watercolor-filter);
+    }
+
+    @keyframes waterFall {
+      0% {
+        opacity: 0.9;
+        transform: translate(0, 0) scale(0.6);
+      }
+      70% {
+        opacity: 0.95;
+        transform: translate(0, 150px) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(0, 180px) scale(2.2);
+        filter: blur(4px);
+      }
+    }
+
+    /* 나비 애니메이션 */
+    .butterfly {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      pointer-events: none;
+      z-index: 28;
+      transition: transform 0.5s ease-out;
+      animation: flutter 2.5s infinite ease-in-out alternate;
+    }
+
+    @keyframes flutter {
+      0% { transform: translateY(0px) rotate(-6deg) scale(0.95); }
+      50% { transform: translateY(-16px) rotate(8deg) scale(1.05); }
+      100% { transform: translateY(-4px) rotate(-4deg) scale(1); }
+    }
+
+    /* 4단계: 정원 일기 섹션 */
+    .diary-section {
+      width: 100%;
+      max-width: 900px;
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(8px);
+      border-radius: 22px;
+      border: 1px solid rgba(232, 196, 160, 0.9);
+      padding: 18px 24px;
+      box-shadow: 0 8px 24px rgba(44, 74, 30, 0.08);
+      margin-top: 10px;
+      display: none;
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .diary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px dashed rgba(44, 74, 30, 0.2);
+      padding-bottom: 8px;
+    }
+
+    .diary-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .diary-date {
+      font-size: 0.85rem;
+      color: #6d885a;
+    }
+
+    .diary-form {
+      display: flex;
+      gap: 12px;
+    }
+
+    .diary-input {
+      flex: 1;
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 1rem;
+      padding: 10px 16px;
+      border-radius: 14px;
+      border: 1.5px solid rgba(201, 224, 192, 0.9);
+      background: #fafdf8;
+      color: var(--text-color);
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .diary-input:focus {
+      border-color: #769E26;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(118, 158, 38, 0.15);
+    }
+
+    .diary-submit-btn {
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 0.98rem;
+      font-weight: 700;
+      padding: 10px 22px;
+      border-radius: 14px;
+      background: #769E26;
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .diary-submit-btn:hover {
+      background: #62851d;
+    }
+    .diary-submit-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* 필기체 일기 전시 보드 */
+    .diary-display-board {
+      margin-top: 14px;
+      padding: 14px 18px;
+      background: #FEFBF6;
+      border: 1px solid rgba(232, 196, 160, 0.6);
+      border-radius: 14px;
+      position: relative;
+      display: none;
+    }
+
+    .handwritten-entry {
+      font-family: 'Nanum Pen Script', cursive;
+      font-size: 1.85rem;
+      color: #2D4021;
+      line-height: 1.4;
+      word-break: break-all;
+    }
+
+    .entry-badge {
+      display: inline-block;
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 0.75rem;
+      background: rgba(201, 224, 192, 0.6);
+      color: var(--text-color);
+      padding: 2px 8px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+    }
+
+    /* SVG 필터 숨김 */
+    .svg-defs-container {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
+    /* 반응형 레이아웃 조정 */
+    @media (max-width: 768px) {
+      h1 { font-size: 1.45rem; }
+      .message-text { font-size: 1.02rem; }
+      .garden-stage { height: 420px; }
+      .seed-bench { left: 14px; top: 130px; }
+      .seed-box { width: 75px; height: 75px; }
+      .draggable-seed { width: 48px; height: 33px; }
+      .soil-bed { width: 280px; height: 100px; }
+      .golden-sun-wrapper { right: 20px; top: 15px; }
+      .diary-form { flex-direction: column; }
+      .diary-submit-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SVG 수채화 & 종이 질감 필터 정의 -->
+  <svg class="svg-defs-container">
+    <defs>
+      <!-- 종이 결 거친 텍스처 필터 -->
+      <filter id="paper-grain" x="0%" y="0%" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise" />
+        <feDiffuseLighting in="noise" lighting-color="#fff" surfaceScale="1.4" result="light">
+          <feDistantLight azimuth="60" elevation="55" />
+        </feDiffuseLighting>
+        <feBlend mode="multiply" in="SourceGraphic" in2="light" />
+      </filter>
+
+      <!-- 수채화 물감 번짐 효과 필터 -->
+      <filter id="watercolor-filter" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="9" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+        <feGaussianBlur in="displaced" stdDeviation="0.8" result="blurred" />
+        <feMerge>
+          <feMergeNode in="blurred" />
+          <feMergeNode in="SourceGraphic" opacity="0.6" />
+        </feMerge>
+      </filter>
+
+      <!-- 흙 그라데이션 -->
+      <linearGradient id="soil-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#795548" />
+        <stop offset="60%" stop-color="#5D4037" />
+        <stop offset="100%" stop-color="#3E2723" />
+      </linearGradient>
+
+      <!-- 줄기 그라데이션 -->
+      <linearGradient id="stem-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#5E8D2E" />
+        <stop offset="50%" stop-color="#7DA73B" />
+        <stop offset="100%" stop-color="#4B7423" />
+      </linearGradient>
+
+      <!-- 잎 그라데이션 -->
+      <linearGradient id="leaf-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#99CC44" />
+        <stop offset="100%" stop-color="#588B27" />
+      </linearGradient>
+
+      <!-- 꽃잎 그라데이션 -->
+      <linearGradient id="flower-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FFF9E6" />
+        <stop offset="60%" stop-color="#FCEFD2" />
+        <stop offset="100%" stop-color="#E8C4A0" />
+      </linearGradient>
+
+      <!-- 콩 꼬투리 그라데이션 -->
+      <linearGradient id="pod-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#8DB640" />
+        <stop offset="100%" stop-color="#4F7925" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- 거친 종이 질감 오버레이 -->
+  <div class="paper-texture-overlay"></div>
+
+  <!-- 헤더 영역 -->
+  <header>
+    <h1>강낭콩의 작은 일대기</h1>
+    <p class="sub-title">포근한 흙에서 활짝 피어나는 꽃까지, 식물의 생명을 함께 돌보아요</p>
+
+    <!-- 단계 인디케이터 -->
+    <div class="stepper">
+      <div class="step-pill active" id="pill-step-1">1단계: 씨앗 심기</div>
+      <div class="step-pill" id="pill-step-2">2단계: 물 주기와 발아</div>
+      <div class="step-pill" id="pill-step-3">3단계: 햇살과 줄기 성장</div>
+      <div class="step-pill" id="pill-step-4">4단계: 개화와 일기 쓰기</div>
+    </div>
+
+    <!-- 안내 메시지 박스 -->
+    <div class="message-card">
+      <div class="message-text" id="guidance-msg">
+        옆에 있는 <em>강낭콩 씨앗</em>을 중앙의 <em>포근한 흙</em> 위로 조심스럽게 옮겨 심어주세요.
+      </div>
+    </div>
+  </header>
+
+  <!-- 메인 정원 캔버스 -->
+  <main class="garden-stage" id="gardenStage">
+    <!-- 은은한 수채화 물감 번짐 배경 -->
+    <div class="watercolor-blob blob-1"></div>
+    <div class="watercolor-blob blob-2"></div>
+
+    <!-- 1단계: 씨앗 보관함 및 드래그 씨앗 -->
+    <div class="seed-bench" id="seedBench">
+      <span class="seed-hint-arrow">나를 드래그해봐요!</span>
+      <div class="seed-box" id="seedBox">
+        <svg class="draggable-seed" id="draggableSeed" viewBox="0 0 70 50">
+          <ellipse cx="35" cy="25" rx="30" ry="20" fill="#9C3A27" />
+          <path d="M 20 18 Q 35 14 50 20 Q 40 26 25 24 Z" fill="#782315" opacity="0.6" />
+          <ellipse cx="38" cy="18" rx="7" ry="4" fill="#E8C4A0" />
+          <circle cx="37" cy="18" r="2.5" fill="#3D120B" />
+        </svg>
+      </div>
+      <span class="seed-box-label">강낭콩 씨앗</span>
+    </div>
+
+    <!-- 3단계: 황금빛 해님 -->
+    <div class="golden-sun-wrapper" id="sunWrapper">
+      <div class="sun-halo"></div>
+      <svg id="goldenSun" width="70" height="70" viewBox="0 0 100 100" style="filter: drop-shadow(0 4px 10px rgba(245,176,65,0.45));">
+        <!-- 해님 광선 -->
+        <g stroke="#F5B041" stroke-width="4" stroke-linecap="round" opacity="0.85">
+          <line x1="50" y1="6" x2="50" y2="18" />
+          <line x1="50" y1="82" x2="50" y2="94" />
+          <line x1="6" y1="50" x2="18" y2="50" />
+          <line x1="82" y1="50" x2="94" y2="50" />
+          <line x1="19" y1="19" x2="28" y2="28" />
+          <line x1="72" y1="72" x2="81" y2="81" />
+          <line x1="19" y1="81" x2="28" y2="72" />
+          <line x1="72" y1="28" x2="81" y2="19" />
+        </g>
+        <!-- 해님 본체 -->
+        <circle cx="50" cy="50" r="28" fill="url(#sun-grad-fill)" />
+        <defs>
+          <radialGradient id="sun-grad-fill" cx="40%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#FFF275" />
+            <stop offset="65%" stop-color="#F5B041" />
+            <stop offset="100%" stop-color="#E67E22" />
+          </radialGradient>
+        </defs>
+        <!-- 부드러운 눈과 미소 -->
+        <circle cx="43" cy="46" r="3" fill="#6E2C00" />
+        <circle cx="57" cy="46" r="3" fill="#6E2C00" />
+        <path d="M 44 54 Q 50 60 56 54" stroke="#6E2C00" stroke-width="2.5" fill="none" stroke-linecap="round" />
+        <circle cx="39" cy="52" r="3.5" fill="#E74C3C" opacity="0.35" />
+        <circle cx="61" cy="52" r="3.5" fill="#E74C3C" opacity="0.35" />
+      </svg>
+      <span class="sun-hint">해님을 움직여보세요 ☀</span>
+    </div>
+
+    <!-- 식물 SVG 드로잉 캔버스 -->
+    <svg class="plant-svg-canvas" id="plantCanvas" viewBox="0 0 900 480" preserveAspectRatio="xMidYMid meet">
+      <!-- 동적 생성 요소들이 들어가는 그룹 -->
+      <g id="plantContainer">
+        <!-- 식물 줄기 그림자/외곽 -->
+        <path id="plantStemBack" d="" fill="none" stroke="rgba(44, 74, 30, 0.15)" stroke-width="12" stroke-linecap="round" />
+        <!-- 식물 주 줄기 -->
+        <path id="plantStem" d="" fill="none" stroke="url(#stem-grad)" stroke-width="8" stroke-linecap="round" />
+        <!-- 줄기 내부의 반짝이는 소프트 민트 물길 -->
+        <path id="mintWaterFlow" d="" fill="none" stroke="#C9E0C0" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="10 14" opacity="0.9" />
+        <!-- 잎, 꽃, 꼬투리 그룹 -->
+        <g id="foliageGroup"></g>
+      </g>
+    </svg>
+
+    <!-- 흙 속에 묻힌 씨앗 -->
+    <div class="planted-seed" id="buriedSeed">
+      <svg width="46" height="32" viewBox="0 0 70 50">
+        <ellipse cx="35" cy="25" rx="30" ry="20" fill="#843220" />
+        <ellipse cx="38" cy="18" rx="6" ry="3.5" fill="#D6AC85" />
+      </svg>
+    </div>
+
+    <!-- 화분 및 포근한 흙 -->
+    <div class="soil-bed" id="soilBed">
+      <svg class="pot-container" viewBox="0 0 340 115">
+        <!-- 테라코타 화분 몸통 -->
+        <polygon points="45,35 70,110 270,110 295,35" class="pot-body" />
+        <!-- 화분 림 테두리 -->
+        <rect x="35" y="24" width="270" height="16" rx="8" class="pot-rim" />
+        <!-- 흙 둔덕 (포근한 흙 수채화 질감) -->
+        <path d="M 40 32 Q 170 12 300 32 Q 260 55 170 52 Q 80 55 40 32 Z" class="soil-mound" id="soilMound" />
+        <!-- 흙 디테일 텍스처 점들 -->
+        <circle cx="120" cy="34" r="2.5" fill="#4E342E" opacity="0.6" />
+        <circle cx="160" cy="28" r="3.2" fill="#3E2723" opacity="0.7" />
+        <circle cx="210" cy="33" r="2.8" fill="#4E342E" opacity="0.6" />
+        <circle cx="185" cy="40" r="2.2" fill="#3E2723" opacity="0.5" />
+      </svg>
+    </div>
+
+    <!-- 나비 컨테이너 (4단계 등장) -->
+    <div id="butterflyLayer"></div>
+  </main>
+
+  <!-- 하단 컨트롤 버튼 영역 -->
+  <div class="stage-controls">
+    <button class="action-btn water-btn" id="waterBtn" style="display: none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+      </svg>
+      <span>물 주기</span>
+      <span class="water-count-badge" id="waterCountBadge">0/3</span>
+    </button>
+    <button class="restart-btn" id="restartBtn">처음부터 다시 시작 🌱</button>
+  </div>
+
+  <!-- 4단계: 오늘의 정원 일기 섹션 -->
+  <section class="diary-section" id="diarySection">
+    <div class="diary-header">
+      <div class="diary-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2C4A1E" stroke-width="2">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <span>오늘의 정원 관찰 일기</span>
+      </div>
+      <div class="diary-date" id="currentDateStr">2026년 봄날의 기록</div>
+    </div>
+    <form class="diary-form" id="diaryForm" onsubmit="event.preventDefault(); submitDiary();">
+      <input type="text" class="diary-input" id="diaryInput" placeholder="오늘 강낭콩을 키우며 느낀 점이나 식물에게 전하고 싶은 말을 남겨보세요..." required autocomplete="off" />
+      <button type="submit" class="diary-submit-btn">일기 남기기 ✍</button>
+    </form>
+    <div class="diary-display-board" id="diaryBoard">
+      <span class="entry-badge">나의 정원 일기장</span>
+      <p class="handwritten-entry" id="diaryEntryText"></p>
+    </div>
+  </section>
+
+  <script>
+    /* 식물 일대기 상태 머신 및 설정 */
+    const STATE = {
+      step: 1,
+      waterCount: 0,
+      sunX: 700,
+      sunY: 100,
+      stemTargetHeight: 0,
+      currentHeight: 0,
+      plantProgress: 0, // 0 to 1
+      isDraggingSeed: false,
+      isDraggingSun: false,
+      mintDashOffset: 0
+    };
+
+    // 오늘 날짜 포맷
+    const today = new Date();
+    document.getElementById('currentDateStr').innerText = 
+      `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 식물 관찰 일기`;
+
+    // DOM 요소 캐싱
+    const gardenStage = document.getElementById('gardenStage');
+    const guidanceMsg = document.getElementById('guidance-msg');
+    const draggableSeed = document.getElementById('draggableSeed');
+    const buriedSeed = document.getElementById('buriedSeed');
+    const seedBench = document.getElementById('seedBench');
+    const soilBed = document.getElementById('soilBed');
+    const soilMound = document.getElementById('soilMound');
+    const waterBtn = document.getElementById('waterBtn');
+    const waterCountBadge = document.getElementById('waterCountBadge');
+    const sunWrapper = document.getElementById('sunWrapper');
+    const plantCanvas = document.getElementById('plantCanvas');
+    const plantStem = document.getElementById('plantStem');
+    const plantStemBack = document.getElementById('plantStemBack');
+    const mintWaterFlow = document.getElementById('mintWaterFlow');
+    const foliageGroup = document.getElementById('foliageGroup');
+    const butterflyLayer = document.getElementById('butterflyLayer');
+    const diarySection = document.getElementById('diarySection');
+    const diaryForm = document.getElementById('diaryForm');
+    const diaryInput = document.getElementById('diaryInput');
+    const diaryBoard = document.getElementById('diaryBoard');
+    const diaryEntryText = document.getElementById('diaryEntryText');
+    const restartBtn = document.getElementById('restartBtn');
+
+    // 단계별 메시지 업데이트 함수
+    function setGuidance(html) {
+      guidanceMsg.style.opacity = '0';
+      setTimeout(() => {
+        guidanceMsg.innerHTML = html;
+        guidanceMsg.style.opacity = '1';
+      }, 200);
+    }
+
+    function updateStepPills(activeStep) {
+      for (let i = 1; i <= 4; i++) {
+        const pill = document.getElementById(`pill-step-${i}`);
+        if (i < activeStep) {
+          pill.className = 'step-pill completed';
+        } else if (i === activeStep) {
+          pill.className = 'step-pill active';
+        } else {
+          pill.className = 'step-pill';
+        }
+      }
+    }
+
+    /* ----------------------------------------------------
+       1단계: 씨앗 드래그 앤 드롭 및 심기 애니메이션
+    ---------------------------------------------------- */
+    let seedDragOffsetX = 0;
+    let seedDragOffsetY = 0;
+
+    function initSeedDrag() {
+      draggableSeed.addEventListener('mousedown', onSeedPointerDown);
+      draggableSeed.addEventListener('touchstart', onSeedPointerDown, { passive: false });
+    }
+
+    function onSeedPointerDown(e) {
+      if (STATE.step !== 1) return;
+      STATE.isDraggingSeed = true;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const rect = draggableSeed.getBoundingClientRect();
+      seedDragOffsetX = clientX - (rect.left + rect.width / 2);
+      seedDragOffsetY = clientY - (rect.top + rect.height / 2);
+
+      draggableSeed.style.position = 'fixed';
+      draggableSeed.style.zIndex = '999';
+      draggableSeed.style.pointerEvents = 'none';
+      soilBed.classList.add('drop-ready');
+
+      moveSeedTo(clientX - seedDragOffsetX, clientY - seedDragOffsetY);
+
+      window.addEventListener('mousemove', onSeedPointerMove);
+      window.addEventListener('mouseup', onSeedPointerUp);
+      window.addEventListener('touchmove', onSeedPointerMove, { passive: false });
+      window.addEventListener('touchend', onSeedPointerUp);
+      e.preventDefault();
+    }
+
+    function moveSeedTo(x, y) {
+      draggableSeed.style.left = `${x - 29}px`;
+      draggableSeed.style.top = `${y - 20}px`;
+    }
+
+    function onSeedPointerMove(e) {
+      if (!STATE.isDraggingSeed) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      moveSeedTo(clientX - seedDragOffsetX, clientY - seedDragOffsetY);
+      e.preventDefault();
+    }
+
+    function onSeedPointerUp(e) {
+      if (!STATE.isDraggingSeed) return;
+      STATE.isDraggingSeed = false;
+      soilBed.classList.remove('drop-ready');
+
+      window.removeEventListener('mousemove', onSeedPointerMove);
+      window.removeEventListener('mouseup', onSeedPointerUp);
+      window.removeEventListener('touchmove', onSeedPointerMove);
+      window.removeEventListener('touchend', onSeedPointerUp);
+
+      // 드롭 영역 체크
+      const soilRect = soilMound.getBoundingClientRect();
+      const seedRect = draggableSeed.getBoundingClientRect();
+      const seedCenterX = seedRect.left + seedRect.width / 2;
+      const seedCenterY = seedRect.top + seedRect.height / 2;
+
+      const isInsideSoil = (
+        seedCenterX >= soilRect.left &&
+        seedCenterX <= soilRect.right &&
+        seedCenterY >= soilRect.top &&
+        seedCenterY <= soilRect.bottom + 25
+      );
+
+      if (isInsideSoil) {
+        // 성공적으로 심어짐
+        draggableSeed.style.display = 'none';
+        seedBench.style.opacity = '0.35';
+        seedBench.style.pointerEvents = 'none';
+
+        // 흙 속으로 쏙 파묻히는 애니메이션
+        buriedSeed.style.opacity = '1';
+        buriedSeed.classList.add('bury');
+
+        // 성공 메시지
+        setGuidance("“씨앗이 포근한 흙 속에서 <em>잠들었어요</em>.”");
+
+        // 2단계 전환
+        setTimeout(() => {
+          proceedToStep2();
+        }, 1100);
+      } else {
+        // 실패 시 복귀
+        draggableSeed.style.position = 'relative';
+        draggableSeed.style.left = 'auto';
+        draggableSeed.style.top = 'auto';
+        draggableSeed.style.zIndex = '25';
+        draggableSeed.style.pointerEvents = 'auto';
+      }
+    }
+
+    /* ----------------------------------------------------
+       2단계: 물 주기와 발아
+    ---------------------------------------------------- */
+    function proceedToStep2() {
+      STATE.step = 2;
+      updateStepPills(2);
+      waterBtn.style.display = 'inline-flex';
+      setGuidance("씨앗이 목마르지 않게 <em>‘물 주기’</em> 버튼을 눌러 촉촉한 수분을 주세요 (0/3)");
+    }
+
+    waterBtn.addEventListener('click', () => {
+      if (STATE.step !== 2) return;
+      STATE.waterCount++;
+      waterCountBadge.innerText = `${STATE.waterCount}/3`;
+
+      // 물방울 수채화 번짐 낙하 효과
+      createWatercolorDrops();
+
+      if (STATE.waterCount < 3) {
+        setGuidance(`물이 스며들며 흙이 촉촉해집니다... (<em>${STATE.waterCount}/3</em>)`);
+      } else if (STATE.waterCount === 3) {
+        waterBtn.disabled = true;
+        waterBtn.style.opacity = '0.6';
+
+        // 발아 애니메이션 (연두색 싹이 쏙 올라옴)
+        sproutAnimation(() => {
+          setGuidance("“와! 소중한 첫 싹이 <em>기지개를 켜며 깨어났어요</em>.”");
+          setTimeout(() => {
+            proceedToStep3();
+          }, 1500);
+        });
+      }
+    });
+
+    function createWatercolorDrops() {
+      const stageRect = gardenStage.getBoundingClientRect();
+      const potCenter = stageRect.width / 2;
+      const numDrops = 6;
+
+      for (let i = 0; i < numDrops; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'water-drop';
+        const offsetX = (Math.random() - 0.5) * 110;
+        const leftPos = potCenter + offsetX;
+        drop.style.left = `${leftPos}px`;
+        drop.style.top = '170px';
+        drop.style.animationDelay = `${i * 0.08}s`;
+
+        // SVG 물방울 모양
+        drop.innerHTML = `
+          <svg viewBox="0 0 30 40" width="100%" height="100%">
+            <path d="M 15 2 C 15 2, 2 20, 2 27 C 2 34, 8 38, 15 38 C 22 38, 28 34, 28 27 C 28 20, 15 2, 15 2 Z" 
+                  fill="${i % 2 === 0 ? '#4fc3f7' : '#29b6f6'}" opacity="0.8" />
+          </svg>
+        `;
+
+        gardenStage.appendChild(drop);
+        setTimeout(() => drop.remove(), 1100);
+      }
+    }
+
+    // 새싹 발아 애니메이션
+    let sproutProgress = 0;
+    function sproutAnimation(callback) {
+      const startBaseY = 405; // 흙 위 위치
+      let progress = 0;
+
+      function renderSprout() {
+        progress += 0.04;
+        if (progress > 1) progress = 1;
+
+        const sproutHeight = 45 * progress;
+        const topY = startBaseY - sproutHeight;
+        const stemPathD = `M 450,${startBaseY} Q 450,${startBaseY - sproutHeight * 0.5} 450,${topY}`;
+        plantStem.setAttribute('d', stemPathD);
+        plantStemBack.setAttribute('d', stemPathD);
+        plantStem.setAttribute('stroke-width', '5');
+
+        // 연두색 떡잎 두 장
+        const leafScale = progress;
+        foliageGroup.innerHTML = `
+          <!-- 떡잎 1 -->
+          <path d="M 450,${topY} Q 425,${topY - 18} 415,${topY - 6} Q 430,${topY + 6} 450,${topY}" 
+                fill="url(#leaf-grad)" filter="url(#watercolor-filter)" transform="scale(${leafScale}) origin(450 ${topY})" />
+          <!-- 떡잎 2 -->
+          <path d="M 450,${topY} Q 475,${topY - 18} 485,${topY - 6} Q 470,${topY + 6} 450,${topY}" 
+                fill="url(#leaf-grad)" filter="url(#watercolor-filter)" transform="scale(${leafScale}) origin(450 ${topY})" />
+        `;
+
+        if (progress < 1) {
+          requestAnimationFrame(renderSprout);
+        } else {
+          STATE.currentHeight = sproutHeight;
+          if (callback) callback();
+        }
+      }
+
+      requestAnimationFrame(renderSprout);
+    }
+
+    /* ----------------------------------------------------
+       3단계: 햇살과 줄기 성장 (해님 드래그 인터랙션)
+    ---------------------------------------------------- */
+    function proceedToStep3() {
+      STATE.step = 3;
+      updateStepPills(3);
+      waterBtn.style.display = 'none';
+      sunWrapper.classList.add('active');
+
+      setGuidance("“<em>햇살</em>을 듬뿍 받은 줄기가 하늘을 향해 쑥쑥 자라요.” (해님을 좌우로 움직여보세요!)");
+
+      initSunDrag();
+      startGrowthSimulation();
+    }
+
+    function initSunDrag() {
+      sunWrapper.addEventListener('mousedown', onSunPointerDown);
+      sunWrapper.addEventListener('touchstart', onSunPointerDown, { passive: false });
+    }
+
+    let sunDragOffsetX = 0;
+    let sunDragOffsetY = 0;
+
+    function onSunPointerDown(e) {
+      if (STATE.step < 3) return;
+      STATE.isDraggingSun = true;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const rect = sunWrapper.getBoundingClientRect();
+      sunDragOffsetX = clientX - rect.left;
+      sunDragOffsetY = clientY - rect.top;
+
+      window.addEventListener('mousemove', onSunPointerMove);
+      window.addEventListener('mouseup', onSunPointerUp);
+      window.addEventListener('touchmove', onSunPointerMove, { passive: false });
+      window.addEventListener('touchend', onSunPointerUp);
+      e.preventDefault();
+    }
+
+    function onSunPointerMove(e) {
+      if (!STATE.isDraggingSun) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const stageRect = gardenStage.getBoundingClientRect();
+
+      let x = clientX - stageRect.left - sunDragOffsetX + 35;
+      let y = clientY - stageRect.top - sunDragOffsetY + 35;
+
+      // 영역 내 제한
+      x = Math.max(60, Math.min(stageRect.width - 60, x));
+      y = Math.max(30, Math.min(220, y));
+
+      sunWrapper.style.left = `${x - 35}px`;
+      sunWrapper.style.top = `${y - 35}px`;
+      sunWrapper.style.right = 'auto';
+
+      // SVG 좌표계(900 x 480)에 맞게 정규화
+      const svgX = (x / stageRect.width) * 900;
+      const svgY = (y / stageRect.height) * 480;
+
+      STATE.sunX = svgX;
+      STATE.sunY = svgY;
+
+      // 해님을 움직일 때 식물 성장 가속
+      if (STATE.plantProgress < 1) {
+        STATE.plantProgress += 0.015;
+      }
+
+      e.preventDefault();
+    }
+
+    function onSunPointerUp() {
+      STATE.isDraggingSun = false;
+      window.removeEventListener('mousemove', onSunPointerMove);
+      window.removeEventListener('mouseup', onSunPointerUp);
+      window.removeEventListener('touchmove', onSunPointerMove);
+      window.removeEventListener('touchend', onSunPointerUp);
+    }
+
+    /* ----------------------------------------------------
+       줄기 곡선 역학 & 소프트 민트 물길 루프
+    ---------------------------------------------------- */
+    let animFrameId = null;
+
+    function startGrowthSimulation() {
+      let smoothedTipX = 450;
+      let smoothedTipY = 360;
+      let currentProgress = 0.15;
+
+      function updatePlant() {
+        // 물길 흐르는 애니메이션 대시 오프셋
+        STATE.mintDashOffset -= 0.7;
+        mintWaterFlow.style.strokeDashoffset = STATE.mintDashOffset;
+
+        // 해님 유인 방향 계산
+        const sunInfluenceX = STATE.sunX || 700;
+        const sunInfluenceY = STATE.sunY || 80;
+
+        if (STATE.step >= 3) {
+          // 자연스러운 지속 성장
+          if (currentProgress < 1) {
+            currentProgress += (STATE.plantProgress - currentProgress) * 0.05 + 0.0018;
+            if (currentProgress > 1) currentProgress = 1;
+            STATE.plantProgress = currentProgress;
+          }
+        }
+
+        // 베이스와 끝점 계산
+        const baseX = 450;
+        const baseY = 405;
+        const fullHeight = 270; // 최대 성장 높이
+        const currentPlantHeight = 45 + (fullHeight - 45) * currentProgress;
+
+        // 줄기 끝점 (해님 쪽으로 자연스럽게 휘어짐)
+        const bendRatio = (sunInfluenceX - 450) / 450; // -1 to 1
+        const targetTipX = 450 + bendRatio * (currentPlantHeight * 0.45);
+        const targetTipY = baseY - currentPlantHeight;
+
+        smoothedTipX += (targetTipX - smoothedTipX) * 0.08;
+        smoothedTipY += (targetTipY - smoothedTipY) * 0.08;
+
+        // 베지에 곡선 제어점들
+        const ctrl1X = baseX + (smoothedTipX - baseX) * 0.15;
+        const ctrl1Y = baseY - currentPlantHeight * 0.35;
+        const ctrl2X = smoothedTipX - bendRatio * 20;
+        const ctrl2Y = smoothedTipY + currentPlantHeight * 0.3;
+
+        const pathD = `M ${baseX},${baseY} C ${ctrl1X},${ctrl1Y} ${ctrl2X},${ctrl2Y} ${smoothedTipX},${smoothedTipY}`;
+
+        plantStem.setAttribute('d', pathD);
+        plantStemBack.setAttribute('d', pathD);
+        mintWaterFlow.setAttribute('d', pathD);
+
+        const stemWidth = 6 + currentProgress * 4;
+        plantStem.setAttribute('stroke-width', stemWidth);
+        plantStemBack.setAttribute('stroke-width', stemWidth + 3);
+
+        // 잎, 꼬투리, 꽃 렌더링
+        renderFoliage(currentProgress, baseX, baseY, smoothedTipX, smoothedTipY, bendRatio);
+
+        // 4단계 진입 조건 체크
+        if (STATE.step === 3 && currentProgress >= 0.95) {
+          proceedToStep4();
+        }
+
+        animFrameId = requestAnimationFrame(updatePlant);
+      }
+
+      animFrameId = requestAnimationFrame(updatePlant);
+    }
+
+    // 줄기 마디에 잎, 꽃, 꼬투리 생성 함수
+    function renderFoliage(prog, bx, by, tx, ty, bend) {
+      let html = '';
+
+      // 떡잎 (아래쪽 마디)
+      html += `
+        <g transform="translate(450, 395) scale(${Math.min(1.2, 0.7 + prog * 0.5)})">
+          <path d="M 0,0 Q -24,-12 -28,-3 Q -15,8 0,0" fill="url(#leaf-grad)" filter="url(#watercolor-filter)" />
+          <path d="M 0,0 Q 24,-12 28,-3 Q 15,8 0,0" fill="url(#leaf-grad)" filter="url(#watercolor-filter)" />
+        </g>
+      `;
+
+      // 1번째 본잎 쌍 (30% 이상 성장 시)
+      if (prog > 0.28) {
+        const leaf1Prog = Math.min(1, (prog - 0.28) / 0.3);
+        const nodeY = by - (by - ty) * 0.35;
+        const nodeX = bx + (tx - bx) * 0.3;
+        html += `
+          <g transform="translate(${nodeX}, ${nodeY}) scale(${leaf1Prog})">
+            <!-- 왼쪽 잎 -->
+            <path d="M 0,0 C -35,-15 -65,5 -75,2 C -65,25 -25,20 0,0" fill="url(#leaf-grad)" filter="url(#watercolor-filter)" />
+            <path d="M 0,0 Q -40,8 -75,2" stroke="#487522" stroke-width="1.5" fill="none" opacity="0.6" />
+            <!-- 오른쪽 잎 -->
+            <path d="M 0,0 C 35,-15 65,5 75,2 C 65,25 25,20 0,0" fill="url(#leaf-grad)" filter="url(#watercolor-filter)" />
+            <path d="M 0,0 Q 40,8 75,2" stroke="#487522" stroke-width="1.5" fill="none" opacity="0.6" />
+          </g>
+        `;
+      }
+
+      // 2번째 잎 쌍 (55% 이상 성장 시)
+      if (prog > 0.55) {
+        const leaf2Prog = Math.min(1, (prog - 0.55) / 0.25);
+        const nodeY2 = by - (by - ty) * 0.65;
+        const nodeX2 = bx + (tx - bx) * 0.6;
+        html += `
+          <g transform="translate(${nodeX2}, ${nodeY2}) scale(${leaf2Prog})">
+            <path d="M 0,0 C -30,-25 -60,-10 -70,-20 C -60,10 -20,15 0,0" fill="url(#leaf-grad)" filter="url(#watercolor-filter)" />
+            <path d="M 0,0 C 30,-25 60,-10 70,-20 C 60,10 20,15 0,0" fill="url(#leaf-grad)" filter="url(#watercolor-filter)" />
+          </g>
+        `;
+      }
+
+      // 꼬투리 (Bean Pods - 75% 이상)
+      if (prog > 0.72) {
+        const podProg = Math.min(1, (prog - 0.72) / 0.2);
+        const podNodeY = by - (by - ty) * 0.52;
+        const podNodeX = bx + (tx - bx) * 0.5;
+        html += `
+          <g transform="translate(${podNodeX - 18}, ${podNodeY}) scale(${podProg}) rotate(${15 + bend * 10})">
+            <!-- 강낭콩 꼬투리 1 -->
+            <path d="M 0,0 Q -15,30 -8,55 Q -4,40 5,20 Q 2,8 0,0" fill="url(#pod-grad)" filter="url(#watercolor-filter)" />
+            <!-- 통통한 콩 윤곽 -->
+            <circle cx="-6" cy="22" r="3" fill="#A8D155" opacity="0.5" />
+            <circle cx="-7" cy="36" r="3" fill="#A8D155" opacity="0.5" />
+          </g>
+          <g transform="translate(${podNodeX + 22}, ${podNodeY + 10}) scale(${podProg * 0.85}) rotate(${-25 + bend * 10})">
+            <!-- 강낭콩 꼬투리 2 -->
+            <path d="M 0,0 Q 15,28 10,50 Q 3,35 -4,18 Q -2,6 0,0" fill="url(#pod-grad)" filter="url(#watercolor-filter)" />
+          </g>
+        `;
+      }
+
+      // 강낭콩 꽃 (Flower - 85% 이상)
+      if (prog > 0.82) {
+        const flowerProg = Math.min(1, (prog - 0.82) / 0.18);
+        html += `
+          <!-- 꼭대기 활짝 핀 꽃 -->
+          <g transform="translate(${tx}, ${ty}) scale(${flowerProg})">
+            <!-- 꽃받침 -->
+            <path d="M -6,8 Q 0,16 6,8 Z" fill="#689F38" />
+            <!-- 나비 모양의 수채화 강낭콩 꽃잎들 -->
+            <!-- 깃뿔 꽃잎 (스탠다드) -->
+            <ellipse cx="0" cy="-12" rx="16" ry="14" fill="url(#flower-grad)" filter="url(#watercolor-filter)" />
+            <!-- 날개 꽃잎 2장 -->
+            <ellipse cx="-11" cy="-4" rx="11" ry="8" fill="#FFF9E6" filter="url(#watercolor-filter)" transform="rotate(-15 -11 -4)" />
+            <ellipse cx="11" cy="-4" rx="11" ry="8" fill="#FFF9E6" filter="url(#watercolor-filter)" transform="rotate(15 11 -4)" />
+            <!-- 용골 꽃잎 (중심) -->
+            <ellipse cx="0" cy="0" rx="8" ry="6" fill="#F9E4B7" />
+            <!-- 부드러운 분홍/살구빛 수채화 터치 -->
+            <circle cx="0" cy="-6" r="4.5" fill="#E8C4A0" opacity="0.65" />
+          </g>
+        `;
+      }
+
+      foliageGroup.innerHTML = html;
+    }
+
+    /* ----------------------------------------------------
+       4단계: 개화와 일기 쓰기 & 나비 소환
+    ---------------------------------------------------- */
+    function proceedToStep4() {
+      STATE.step = 4;
+      updateStepPills(4);
+
+      setGuidance("“<em>세상에서 가장 아름다운 꽃이 피었습니다!</em>”");
+
+      // 나비 생성
+      spawnButterflies();
+
+      // 일기 쓰기 폼 노출
+      diarySection.style.display = 'block';
+      setTimeout(() => {
+        diarySection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 400);
+    }
+
+    // 수채화 느낌 나비 여러 마리 생성
+    function spawnButterflies() {
+      butterflyLayer.innerHTML = '';
+      const colors = ['#E8C4A0', '#C9E0C0', '#F9E4B7', '#D4E6F1'];
+      const positions = [
+        { left: '42%', top: '90px', delay: '0s' },
+        { left: '55%', top: '120px', delay: '0.8s' },
+        { left: '35%', top: '150px', delay: '1.4s' }
+      ];
+
+      positions.forEach((pos, idx) => {
+        const butterfly = document.createElement('div');
+        butterfly.className = 'butterfly';
+        butterfly.style.left = pos.left;
+        butterfly.style.top = pos.top;
+        butterfly.style.animationDelay = pos.delay;
+
+        const color = colors[idx % colors.length];
+        butterfly.innerHTML = `
+          <svg viewBox="0 0 40 40" width="100%" height="100%">
+            <!-- 나비 날개 수채화 도형 -->
+            <ellipse cx="12" cy="14" rx="10" ry="8" fill="${color}" opacity="0.85" transform="rotate(-20 12 14)" filter="url(#watercolor-filter)" />
+            <ellipse cx="28" cy="14" rx="10" ry="8" fill="${color}" opacity="0.85" transform="rotate(20 28 14)" filter="url(#watercolor-filter)" />
+            <ellipse cx="14" cy="24" rx="7" ry="5.5" fill="${color}" opacity="0.7" transform="rotate(25 14 24)" />
+            <ellipse cx="26" cy="24" rx="7" ry="5.5" fill="${color}" opacity="0.7" transform="rotate(-25 26 24)" />
+            <!-- 몸통 & 더듬이 -->
+            <line x1="20" y1="10" x2="20" y2="28" stroke="#3D2B1F" stroke-width="2" stroke-linecap="round" />
+            <path d="M 19 10 Q 14 4 11 6" stroke="#3D2B1F" stroke-width="1.2" fill="none" />
+            <path d="M 21 10 Q 26 4 29 6" stroke="#3D2B1F" stroke-width="1.2" fill="none" />
+          </svg>
+        `;
+
+        butterflyLayer.appendChild(butterfly);
+      });
+    }
+
+    // 일기 제출 처리
+    function submitDiary() {
+      const text = diaryInput.value.trim();
+      if (!text) return;
+
+      diaryEntryText.innerText = `“${text}”`;
+      diaryBoard.style.display = 'block';
+      diaryInput.value = '';
+
+      // 따뜻한 격려 메시지 업데이트
+      setGuidance("당신의 정성에 보답하듯, <em>예쁜 일기</em>와 함께 강낭콩이 행복하게 미소 짓고 있어요. 🌸");
+    }
+
+    /* ----------------------------------------------------
+       처음부터 다시 시작
+    ---------------------------------------------------- */
+    restartBtn.addEventListener('click', () => {
+      // 상태 초기화
+      STATE.step = 1;
+      STATE.waterCount = 0;
+      STATE.plantProgress = 0;
+      STATE.currentHeight = 0;
+
+      // 애니메이션 중단
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+
+      // DOM 초기화
+      updateStepPills(1);
+      setGuidance("옆에 있는 <em>강낭콩 씨앗</em>을 중앙의 <em>포근한 흙</em> 위로 조심스럽게 옮겨 심어주세요.");
+
+      // 씨앗 초기화
+      draggableSeed.style.display = 'block';
+      draggableSeed.style.position = 'relative';
+      draggableSeed.style.left = 'auto';
+      draggableSeed.style.top = 'auto';
+      draggableSeed.style.pointerEvents = 'auto';
+      seedBench.style.opacity = '1';
+      seedBench.style.pointerEvents = 'auto';
+
+      buriedSeed.style.opacity = '0';
+      buriedSeed.classList.remove('bury');
+
+      // 물주기 버튼 초기화
+      waterBtn.style.display = 'none';
+      waterBtn.disabled = false;
+      waterBtn.style.opacity = '1';
+      waterCountBadge.innerText = '0/3';
+
+      // 해님 초기화
+      sunWrapper.classList.remove('active');
+      sunWrapper.style.left = 'auto';
+      sunWrapper.style.right = '50px';
+      sunWrapper.style.top = '25px';
+
+      // 캔버스 초기화
+      plantStem.setAttribute('d', '');
+      plantStemBack.setAttribute('d', '');
+      mintWaterFlow.setAttribute('d', '');
+      foliageGroup.innerHTML = '';
+      butterflyLayer.innerHTML = '';
+
+      // 일기 초기화
+      diarySection.style.display = 'none';
+      diaryBoard.style.display = 'none';
+      diaryInput.value = '';
+    });
+
+    // 시작
+    initSeedDrag();
+  </script>
+</body>
+</html>
